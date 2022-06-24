@@ -9,27 +9,32 @@ use TEC\Events\Custom_Tables\V1\Migration\String_Dictionary;
  */
 
 ?>
-<div class="tec-ct1-upgrade__row">
-	<div class="content-container">
-		<h3>
-			<?php
-			include $template_directory . '/upgrade-logo.php';
-			echo esc_html( $text->get( 'preview-in-progress' ) );
-			?>
-		</h3>
+<div class="tec-ct1-upgrade--<?php echo sanitize_key( $phase ); ?>">
+	<div class="tec-ct1-upgrade__row">
+		<div class="content-container">
+			<h3>
+				<?php $this->template( 'migration/upgrade-logo' ); ?>
+				<?php echo esc_html( $text->get( 'preview-in-progress' ) ); ?>
+			</h3>
 
-		<p><?php echo esc_html( $text->get( 'preview-scanning-events' ) ); ?></p>
-		<div class="tec-ct1-upgrade-update-bar-container">
-			<p><?php echo esc_html( $text->get( 'loading-message' ) ); ?></p>
+			<p><?php echo esc_html( $text->get( 'preview-scanning-events' ) ); ?></p>
+
+			<?php $this->template( 'migration/partials/progress-bar' ); ?>
+
+			<div>
+				<a
+					class="tec-ct1-upgrade-start-migration-preview"
+					href="#"
+				>
+					<?php echo esc_html( $text->get( 'retry-preview-button' ) ); ?>
+				</a>
+			</div>
 		</div>
-		<div>
-			<a class="tec-ct1-upgrade-start-migration-preview"
-			   href="#"><?php echo esc_html( $text->get( 'retry-preview-button' ) ); ?></a>
+		<div class="image-container">
+			<img
+				class="screenshot"
+				src="<?php echo esc_url( $text->get( "$phase-screenshot-url" ) ); ?>"
+				alt="<?php echo esc_attr( $text->get( 'preview-screenshot-alt' ) ); ?>"/>
 		</div>
-	</div>
-	<div class="image-container">
-		<img class="screenshot"
-			 src="<?php echo esc_url( $text->get( "$phase-screenshot-url" ) ); ?>"
-			 alt="<?php echo esc_attr( $text->get( 'preview-screenshot-alt' ) ); ?>"/>
 	</div>
 </div>

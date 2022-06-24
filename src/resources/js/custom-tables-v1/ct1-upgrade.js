@@ -159,40 +159,16 @@ export const pollForReport = () => {
 
 /**
  * Handles the response from the report request.
- *
+ *3
  * @since TBD
  *
  * @param {object} data The response object with the compiled report data.
  */
 export const handleReportData = function (data) {
-	const {nodes, key, html} = data;
+	getUpgradeBoxElement().innerHTML = data;
+	bindNodes();
 
-	// Write our HTML if we are new.
-	if (!currentViewState.key || currentViewState.key !== key) {
-		getUpgradeBoxElement().innerHTML = html;
-		bindNodes(key);
-	}
-	// Iterate on nodes.
-	nodes.forEach(
-		(node) => {
-			if (isNodeDiff(node.key, node.hash)) {
-				// Write new content.
-				let element = document.querySelector(node.target);
-				if (element) {
-					if (node.prepend) {
-						element.innerHTML = node.html + element.innerHTML;
-					} else if (node.append) {
-						element.innerHTML = element.innerHTML + node.html;
-					} else {
-						element.innerHTML = node.html;
-					}
-					bindNodes(node.key);
-				}
-			}
-		},
-	);
-	// Store changes locally for next request.
-	currentViewState = data;
+	return;
 };
 
 /**

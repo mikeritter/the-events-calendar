@@ -15,6 +15,7 @@ namespace TEC\Events\Custom_Tables\V1\Migration;
 
 use TEC\Events\Custom_Tables\V1\Migration\Admin\Phase_View_Renderer;
 use TEC\Events\Custom_Tables\V1\Migration\Admin\Progress_Modal;
+use TEC\Events\Custom_Tables\V1\Migration\Admin\Template;
 use TEC\Events\Custom_Tables\V1\Migration\Admin\Upgrade_Tab;
 use TEC\Events\Custom_Tables\V1\Migration\Reports\Event_Report;
 use TEC\Events\Custom_Tables\V1\Migration\Reports\Event_Report_Categories;
@@ -210,17 +211,15 @@ class Ajax {
 	 *
 	 * @since TBD
 	 *
-	 * @return array<string, mixed>
+	 * @return string
 	 */
 	protected function get_report() {
 		// What phase are we in?
 		$state    = $this->state;
 		$phase    = $state->get_phase();
-		$renderer = $this->get_renderer_for_phase( $phase );
 
-		return $renderer->compile();
+		return $this->get_html( $phase );
 	}
-
 
 	/**
 	 * Will fetch event reports for a particular filter, and check if there are more to request for that filter.
@@ -267,8 +266,10 @@ class Ajax {
 		$count         = 25;
 		$renderer_args = [
 			'state'  => $this->state,
+			'phase'  => $phase,
 			'report' => $this->site_report,
-			'text'   => $this->text
+			'text'   => $this->text,
+			'should_poll' => $this->should_renderer_poll( $phase ),
 		];
 
 		switch ( $phase ) {
@@ -339,26 +340,24 @@ class Ajax {
 	 *
 	 * @param string $phase The current phase.
 	 *
-	 * @return string|void The primary template file to load for this phase.
+	 * @return array The primary template file to load for this phase.
 	 */
 	protected function get_renderer_template( $phase ) {
 		$phase = $phase === null ? State::PHASE_PREVIEW_PROMPT : $phase;
 
 		// Is the Maintenance Mode view requesting the report? This changes how we handle the views.
 		$is_maintenance_mode = ! empty( $_GET["is_maintenance_mode"] );
+		$template = [ 'migration' ];
 
-		// Determine base directory for templates.
-		$base_dir = $is_maintenance_mode ? "/maintenance-mode/phase" : "/phase";
-
-		// Base template is phase name. Some phases might change it with other logic.
-		$template = $phase;
+		if ( $is_maintenance_mode ) {
+			// Determine base directory for templates.
+			$template[] =  'maintenance-mode';
+		}
+		$template[] = 'phase';
 
 		switch ( $phase ) {
 			case State::PHASE_MIGRATION_FAILURE_IN_PROGRESS:
-				$template = State::PHASE_MIGRATION_IN_PROGRESS;
-			case State::PHASE_PREVIEW_IN_PROGRESS:
-			case State::PHASE_MIGRATION_IN_PROGRESS:
-				return "$base_dir/$template.php";
+				$template[] = State::PHASE_MIGRATION_IN_PROGRESS;
 			case State::PHASE_CANCEL_COMPLETE:
 			case State::PHASE_REVERT_COMPLETE:
 			case State::PHASE_PREVIEW_PROMPT:
@@ -366,16 +365,19 @@ class Ajax {
 				// Maintenance mode and migration failure has templates for each phase.
 				$specific_template = ( State::PHASE_MIGRATION_FAILURE_COMPLETE === $phase || $is_maintenance_mode );
 				if ( $specific_template ) {
-					$template = $phase;
+					$template[] = $phase;
 				} else {
 					// Other phases / views have this specific template.
-					$template = State::PHASE_PREVIEW_PROMPT;
+					$template[] = State::PHASE_PREVIEW_PROMPT;
 				}
-
-				return "$base_dir/$template.php";
+				break;
 			default:
-				return "$base_dir/$template.php";
+				// Base template is phase name
+				$template[] = $phase;
+				break;
 		}
+
+		return $template;
 	}
 
 	/**
@@ -408,52 +410,15 @@ class Ajax {
 	 *
 	 * @param string $phase The current phase of the migration.
 	 *
-	 * @return Phase_View_Renderer The configured Phase_View_Renderer for this particular phase.
+	 * @return string The HTML for the phase we are going to render.
 	 */
-	public function get_renderer_for_phase( $phase ) {
-
-		/**
-		 * Filters the Phase_View_Renderer being constructed for this phase.
-		 *
-		 * @since TBD
-		 *
-		 * @param Phase_View_Renderer A reference to the Phase_View_Renderer that should be used.
-		 *                           Initially `null`.
-		 * @param string $phase      The current phase we are in.
-		 */
-		$renderer = apply_filters( "tec_events_custom_tables_v1_migration_ajax_ui_renderer", null, $phase );
-		if ( $renderer instanceof Phase_View_Renderer ) {
-
-			return $renderer;
-		}
-
+	public function get_html( $phase ) {
 		$phase = $phase === null ? State::PHASE_PREVIEW_PROMPT : $phase;
 
 		// Get the args.
 		$renderer_args = $this->get_renderer_args( $phase );
 		$template      = $this->get_renderer_template( $phase );
-		$renderer      = new Phase_View_Renderer( $phase, $template, $renderer_args );
-		$renderer->should_poll( $this->should_renderer_poll( $phase ) );
-
-		switch ( $phase ) {
-			case State::PHASE_MIGRATION_FAILURE_IN_PROGRESS:
-			case State::PHASE_PREVIEW_IN_PROGRESS:
-			case State::PHASE_MIGRATION_IN_PROGRESS:
-				// * Warning, need a new report object here, state will have changed.
-				$site_report = Site_Report::build();
-				$renderer->register_node( 'progress-bar',
-					'.tec-ct1-upgrade-update-bar-container',
-					'/partials/progress-bar.php',
-					[
-						'phase'  => $phase,
-						'report' => $site_report,
-						'text'   => $this->text
-					]
-				);
-				break;
-		}
-
-		return $renderer;
+		return tribe( Template::class )->template( $template, $renderer_args, false );
 	}
 
 	/**

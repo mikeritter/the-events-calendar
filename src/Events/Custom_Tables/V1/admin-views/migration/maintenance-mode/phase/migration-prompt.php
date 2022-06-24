@@ -13,18 +13,16 @@ use TEC\Events\Custom_Tables\V1\Migration\String_Dictionary;
 <div class="tec-ct1-upgrade__row">
 	<div class="content-container">
 		<h3>
-			<?php
-			include $template_directory . '/upgrade-logo.php';
-			?>
+			<?php $this->template( 'upgrade-logo' ); ?>
 			<?php echo esc_html( $text->get( 'preview-complete' ) ); ?>
 		</h3>
 
 		<p>
 			<?php
 			echo sprintf(
-					esc_html( $text->get( 'preview-complete-paragraph' ) ),
-					'<a href="https://evnt.is/2n" rel="noopener" target="_blank">',
-					'</a>'
+				esc_html( $text->get( 'preview-complete-paragraph' ) ),
+				'<a href="https://evnt.is/2n" rel="noopener" target="_blank">',
+				'</a>'
 			);
 			?>
 		</p>
@@ -37,10 +35,10 @@ use TEC\Events\Custom_Tables\V1\Migration\String_Dictionary;
 				echo esc_html( $text->get( 'migration-is-blocked' ) );
 			} else {
 				echo sprintf(
-						esc_html( $text->get( 'preview-estimate' ) ),
-						'<strong>',
-						'</strong>',
-						$report->estimated_time_in_minutes
+					esc_html( $text->get( 'preview-estimate' ) ),
+					'<strong>',
+					'</strong>',
+					$report->estimated_time_in_minutes
 				);
 
 				if ( $addendum = $text->get( 'migration-prompt-plugin-state-addendum' ) ) {
@@ -58,38 +56,27 @@ use TEC\Events\Custom_Tables\V1\Migration\String_Dictionary;
 	</div>
 
 	<div class="image-container">
-		<img class="screenshot"
-			 src="<?php echo esc_url( $text->get( "$phase-screenshot-url" ) ); ?>"
-			 alt="<?php echo esc_attr( $text->get( 'preview-screenshot-alt' ) ); ?>"/>
+		<img
+			class="screenshot"
+			src="<?php echo esc_url( $text->get( "$phase-screenshot-url" ) ); ?>"
+			alt="<?php echo esc_attr( $text->get( 'preview-screenshot-alt' ) ); ?>"/>
 	</div>
 </div>
 
 <div class="tec-ct1-upgrade__row">
 	<?php
-	$datetime_heading = $text->get( 'previewed-date-heading' );
-	$total_heading    = $text->get( 'previewed-total-heading' );
-	ob_start();
-	?>
-	<em title="<?php esc_attr( $text->get( 're-run-preview-button' ) ) ?>">
-		<?php include TEC_CUSTOM_TABLES_V1_ROOT . '/admin-views/migration/icons/rerun.php'; ?>
-	</em>
-	<a class="tec-ct1-upgrade-start-migration-preview"
-	   href="#"><?php echo esc_html( $text->get( 're-run-preview-button' ) ); ?></a>
-	<?php
-	$heading_action = ob_get_clean();
+
 	include_once __DIR__ . '/report.php';
 	?>
 </div>
 
 <div class="tec-ct1-upgrade__row tec-ct1-action-container">
 	<div class="content-container">
-		<button class="tec-ct1-upgrade-start-migration"
-				<?php
-				if ( $report->has_errors ) { // @todo Do we want to block migration like this?
-					?>
-					disabled="disabled"
-				<?php } ?>
-				type="button"><?php echo esc_html( $text->get( 'start-migration-button' ) ); ?></button>
+		<button
+			class="tec-ct1-upgrade-start-migration"
+			<?php disabled( $report->has_errors ) ?>
+			type="button"
+		><?php echo esc_html( $text->get( 'start-migration-button' ) ); ?></button>
 		<i>
 			<?php
 			if ( $report->estimated_time_in_minutes === 1 ) {

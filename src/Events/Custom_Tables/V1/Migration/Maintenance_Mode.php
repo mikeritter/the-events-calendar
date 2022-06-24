@@ -59,11 +59,14 @@ class Maintenance_Mode {
 	 */
 	public function inject_settings_page_modal( $tab ) {
 		if ( $tab === 'upgrade' || ! $this->migration_state->should_lock_for_maintenance() ) {
-			return;
+			return '';
 		}
 
-		$text = tribe( String_Dictionary::class );
-		include TEC_CUSTOM_TABLES_V1_ROOT . '/admin-views/migration/settings-maintenance-modal.php';
+		$template_vars = [
+			'text' => tribe( String_Dictionary::class ),
+		];
+
+		return tribe( Admin\Template::class )->template( 'migration/settings-maintenance-modal', $template_vars );
 	}
 
 	/**
